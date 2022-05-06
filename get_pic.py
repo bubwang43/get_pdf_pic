@@ -1,9 +1,11 @@
 # 需要安装的包包括：pdfminer3k, fitz, PyMuPDF
-from pdfminer.pdfparser import PDFParser, PDFDocument
+from pdfminer.pdfparser import PDFParser
+from pdfminer.pdfdocument import PDFDocument
 from pdfminer.pdfinterp import PDFResourceManager, PDFPageInterpreter
 from pdfminer.converter import PDFPageAggregator
 from pdfminer.layout import LAParams
-from pdfminer.pdfinterp import PDFTextExtractionNotAllowed
+from pdfminer.pdfpage import PDFTextExtractionNotAllowed
+from pdfminer.pdfpage import PDFPage
 from PIL import Image
 import fitz
 import re
@@ -17,16 +19,13 @@ class GetPic:
         :param filename: pdf路径
         :param password: 密码
         """
-        with open(filename, 'rb') as file:
-            # 创建文档分析器
-            self.parser = PDFParser(file)
+        fp = open(filename, 'rb')
+        # 用文件对象创建一个PDF文档分析器
+        self.parser = PDFParser(fp)
         # 创建文档
-        self.doc = PDFDocument()
+        self.doc = PDFDocument(self.parser)
         # 连接文档与文档分析器
         self.parser.set_document(self.doc)
-        self.doc.set_parser(self.parser)
-        # 初始化, 提供初始密码, 若无则为空字符串
-        self.doc.initialize(password)
         # 检测文档是否提供txt转换, 不提供就忽略, 抛出异常
         if not self.doc.is_extractable:
             raise PDFTextExtractionNotAllowed
@@ -39,7 +38,7 @@ class GetPic:
             # 创建一个PDF解释器对象
             self.interpreter = PDFPageInterpreter(self.resource_manager, self.device)
             # pdf的page对象列表
-            self.doc_pdfs = list(self.doc.get_pages())
+            self.doc_pdfs = list(PDFPage.create_pages(self.doc))
         #  打开PDF文件, 生成一个包含图片doc对象的可迭代对象
         self.doc_pics = fitz.open(filename)
         self.pic_info = {}
@@ -59,7 +58,7 @@ class GetPic:
         path = os.path.join(pic_path, str(pg)) + '.png'
         pm.writePNG(path)
         return path
-    
+
     def get_level(self, zip_loc_list):
         """
         记录每页PDF上图表的相对水平位置
@@ -67,9 +66,9 @@ class GetPic:
         可以有几个图表在同一水平面上，即level_k(k=0,1,...,n)相同
         :param zip_loc_list: 包含loc_top和loc_bottom，这两个数组的元素一一对应
         示例：
-        [(((33.8, 727.6025, 152.91049999999998, 737.4499999999999), '表 9：微盟 – 收入利润表'), 
-        ((33.250054999999996, 388.634, 198.79753000000002, 396.95000000000005), '资料来源：公司财报，安信证券研究中心预测')), 
-        (((33.8, 312.48249999999996, 158.16049999999998, 322.33), '表 10：微盟 – 现金流量表'), 
+        [(((33.8, 727.6025, 152.91049999999998, 737.4499999999999), '表 9：微盟 – 收入利润表'),
+        ((33.250054999999996, 388.634, 198.79753000000002, 396.95000000000005), '资料来源：公司财报，安信证券研究中心预测')),
+        (((33.8, 312.48249999999996, 158.16049999999998, 322.33), '表 10：微盟 – 现金流量表'),
         ((33.250054999999996, 123.634, 198.79753000000002, 131.95), '资料来源：公司财报，安信证券研究中心预测'))]
         :return: 返回字典，key为相对水平位置，value为对应的图表列表，列表中的值是zip_loc_list中对应图表的index
         示例：
@@ -96,24 +95,24 @@ class GetPic:
 
                 # 将两个待比较的图表中更扁平的图表对应的高度值保存下来
                 high = min(abs(zip_loc_list[i][0][0][3] - zip_loc_list[i][1][0][1]), \
-                    abs(zip_loc_list[j][0][0][3] - zip_loc_list[j][1][0][1]))
-                
+                           abs(zip_loc_list[j][0][0][3] - zip_loc_list[j][1][0][1]))
+
                 # 如果一个图表把另一个图表完全包住，即上边界比另一个高，下边界比另一个低，那么认为两个图表在一条水平线上
                 if zip_loc_list[i][0][0][3] <= zip_loc_list[j][0][0][3] and \
-                    zip_loc_list[i][1][0][1] >= zip_loc_list[j][1][0][1]:
+                        zip_loc_list[i][1][0][1] >= zip_loc_list[j][1][0][1]:
                     visit[j] = 1
                     level_dict[level_count_str].append(j)
-                
+
                 elif zip_loc_list[i][0][0][3] >= zip_loc_list[j][0][0][3] and \
-                    zip_loc_list[i][1][0][1] <= zip_loc_list[j][1][0][1]:
+                        zip_loc_list[i][1][0][1] <= zip_loc_list[j][1][0][1]:
                     visit[j] = 1
                     level_dict[level_count_str].append(j)
-                
+
                 # 如果两个图表上边界高度之差和下边界高度之差都大于high值，那么认为两个图表不在一条水平线上
                 elif min(abs(zip_loc_list[i][0][0][3] - zip_loc_list[j][0][0][3]), \
-                    abs(zip_loc_list[i][1][0][1] - zip_loc_list[j][1][0][1])) >= high:
+                         abs(zip_loc_list[i][1][0][1] - zip_loc_list[j][1][0][1])) >= high:
                     continue
-                
+
                 # 其他情况则认为两个图表在一条水平线上
                 else:
                     visit[j] = 1
@@ -153,7 +152,7 @@ class GetPic:
                 # 匹配关键词
                 if re.search(r'[图表]+\s*\d+[:：\s]*', text):
                     title_start = re.search(r'[图表]+\s*\d+[:：\s]*', text).start()
-                    loc_top.append((i.bbox, text[title_start: ].replace('\n', '')))
+                    loc_top.append((i.bbox, text[title_start:].replace('\n', '')))
                 elif re.search(r'来源[:：\s]', text):
                     text = text.split('\n')[0]
                     loc_bottom.append((i.bbox, text))
@@ -166,22 +165,22 @@ class GetPic:
                         # 可以认为上一页关键词r'[图表]+\s*\d+[:：\s]*'以下到底边部分对应的是跨页图表的上半部分
                         # 本页关键词r'来源[:：\s]'以上到顶边部分对应的是跨页图表的下半部分
                         if last_pgn in self.pic_info and \
-                            len(self.pic_info[last_pgn]['loc_bottom']) < len(self.pic_info[last_pgn]['loc_top']):
+                                len(self.pic_info[last_pgn]['loc_bottom']) < len(self.pic_info[last_pgn]['loc_top']):
                             # 将上一页底边的坐标保存下来
                             self.pic_info[last_pgn]['loc_bottom'].append(((0, 0, 0, 0), ''))
                             # 将本页顶边的坐标保存下来
                             loc_top.append(((0, canvas_size[3], 0, canvas_size[3]), \
-                                self.pic_info[last_pgn]['loc_top'][-1][1] + '@~@continue'))
+                                            self.pic_info[last_pgn]['loc_top'][-1][1] + '@~@continue'))
                         # 如果上一页不存在关键词r'[图表]+\s*\d+[:：\s]*'与本页对应的关键词r'来源[:：\s]'配对
                         # 那么需要把关键词r'来源[:：\s]'去除掉
                         else:
-                            if text_order == 1:  
+                            if text_order == 1:
                                 loc_top.append(((0, canvas_size[3], 0, canvas_size[3]), first_text))
                             else:
                                 loc_bottom.pop(-1)
 
         return (loc_top, loc_bottom, canvas_size, left, right)
-        
+
     def get_crops(self, pic_path, canvas_size, position, cropped_pic_name, cropped_pic_path):
         """
         按给定位置截取图片
@@ -197,10 +196,10 @@ class GetPic:
         pic_size = img.size
         # 截图的范围扩大值
         size_increase = 10
-        x1 = max(pic_size[0] * (position[0] - size_increase)/canvas_size[2], 0)
-        x2 = min(pic_size[0] * (position[2] + size_increase)/canvas_size[2], pic_size[0])
-        y1 = max(pic_size[1] * (1 - (position[3] + size_increase)/canvas_size[3]), 0)
-        y2 = min(pic_size[1] * (1 - (position[1] - size_increase)/canvas_size[3]), pic_size[1])
+        x1 = max(pic_size[0] * (position[0] - size_increase) / canvas_size[2], 0)
+        x2 = min(pic_size[0] * (position[2] + size_increase) / canvas_size[2], pic_size[0])
+        y1 = max(pic_size[1] * (1 - (position[3] + size_increase) / canvas_size[3]), 0)
+        y2 = min(pic_size[1] * (1 - (position[1] - size_increase) / canvas_size[3]), pic_size[1])
         try:
             cropped_img = img.crop((x1, y1, x2, y2))
             # 保存截图文件的路径
@@ -229,13 +228,13 @@ class GetPic:
             pgn_info = self.get_pic_loc(doc_pdf, pgn)
             self.pic_info[pgn] = {
                 'path': path,
-                'loc_top': pgn_info[0], 
+                'loc_top': pgn_info[0],
                 'loc_bottom': pgn_info[1],
                 'canvas_size': pgn_info[2],
                 'left': pgn_info[3],
                 'right': pgn_info[4]
             }
-    
+
     def generate_result(self, cropped_pic_path):
         """
         对PDF按页提取图表。图表是从PDF转成的图片上截取下来的，不是直接在PDF进行操作
@@ -263,14 +262,14 @@ class GetPic:
                     x1 = v['left'] + level_order * width / level_count
                     if level_order > 0:
                         x1 = min(min(x1, loc_list[item_list[level_order]][0][0][0]), \
-                            loc_list[item_list[level_order]][0][0][2])
+                                 loc_list[item_list[level_order]][0][0][2])
                     level_order += 1
                     x2 = v['left'] + level_order * width / level_count
                     # 如果一个水平面上有多个图表，并且当前图表不是最右边的一个图表
                     # 令x2与当前图表右边图表的x1坐标进行比较，取较小值做为当前图表的x2坐标
                     if level_count > 1 and level_order < level_count:
                         x2 = min(min(x2, loc_list[item_list[level_order]][0][0][0]), \
-                            loc_list[item_list[level_order]][0][0][2])
+                                 loc_list[item_list[level_order]][0][0][2])
                     y1 = loc_list[item][1][0][1]
                     y2 = loc_list[item][0][0][3]
                     name = loc_list[item][0][1]
@@ -322,9 +321,9 @@ class GetPic:
 
 
 if __name__ == '__main__':
-    pdf_path = 'SaaS龙头深耕微信生态，双轮驱动增长.pdf'
-    pic_path = 'SaaS龙头深耕微信生态，双轮驱动增长/PNG'
-    cropped_pic_path = 'SaaS龙头深耕微信生态，双轮驱动增长/CROPPED_PIC'
+    pdf_path = 'pdf/SaaS龙头深耕微信生态，双轮驱动增长.pdf'
+    pic_path = 'PNG'
+    cropped_pic_path = 'CROPPED_PIC'
 
     gp = GetPic(pdf_path)
     if not os.path.exists(pic_path):
