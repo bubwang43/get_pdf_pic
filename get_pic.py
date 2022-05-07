@@ -319,18 +319,35 @@ class GetPic:
             os.remove(png2)
             joint.save(png1)
 
-
 if __name__ == '__main__':
-    pdf_path = 'pdf/SaaS龙头深耕微信生态，双轮驱动增长.pdf'
-    pic_path = 'PNG'
-    cropped_pic_path = 'CROPPED_PIC'
+    file_dir = 'D:\cicc_yanbao'  # 你的文件路径
+    for root, dirs, files in os.walk(file_dir):
+        for file in files:
+            if os.path.splitext(file)[1] == '.pdf':
+                file_name = os.path.splitext(file)[0]
+                pdf_path = os.path.join(root, file)
+                pic_path = "D:\pdf_pic\{}\PNG".format(file_name)
+                cropped_pic_path = 'D:\pdf_pic\{}\CROPPED_PIC'.format(file_name)
+                gp = GetPic(pdf_path)
+                if not os.path.exists(pic_path):
+                    os.makedirs(pic_path)
+                if not os.path.exists(cropped_pic_path):
+                    os.makedirs(cropped_pic_path)
+                page_count = gp.doc_pics.pageCount
+                gp.get_pic_info(pic_path, page_count)
+                gp.generate_result(cropped_pic_path)
+                gp.blend_pic(cropped_pic_path)
 
-    gp = GetPic(pdf_path)
-    if not os.path.exists(pic_path):
-        os.makedirs(pic_path)
-    if not os.path.exists(cropped_pic_path):
-        os.makedirs(cropped_pic_path)
-    page_count = gp.doc_pics.pageCount
-    gp.get_pic_info(pic_path, page_count)
-    gp.generate_result(cropped_pic_path)
-    gp.blend_pic(cropped_pic_path)
+    # pdf_path = 'pdf/碳中和双周报：“碳”策中国（10）：能源部门“双碳”施工图出台  2月10日_2月23日.pdf'
+    # pic_path = 'D:\pdf_pic\碳中和双周报：“碳”策中国（10）：能源部门“双碳”施工图出台  2月10日_2月23日\PNG'
+    # cropped_pic_path = 'D:\pdf_pic\碳中和双周报：“碳”策中国（10）：能源部门“双碳”施工图出台  2月10日_2月23日\CROPPED_PIC'
+    #
+    # gp = GetPic(pdf_path)
+    # if not os.path.exists(pic_path):
+    #     os.makedirs(pic_path)
+    # if not os.path.exists(cropped_pic_path):
+    #     os.makedirs(cropped_pic_path)
+    # page_count = gp.doc_pics.pageCount
+    # gp.get_pic_info(pic_path, page_count)
+    # gp.generate_result(cropped_pic_path)
+    # gp.blend_pic(cropped_pic_path)
