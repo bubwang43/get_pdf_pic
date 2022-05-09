@@ -326,8 +326,8 @@ if __name__ == '__main__':
             if os.path.splitext(file)[1] == '.pdf':
                 file_name = os.path.splitext(file)[0]
                 pdf_path = os.path.join(root, file)
-                pic_path = "D:\pdf_pic\{}\PNG".format(file_name)
-                cropped_pic_path = 'D:\pdf_pic\{}\CROPPED_PIC'.format(file_name)
+                pic_path = "D:\pdf_graphic\{}\PNG".format(file_name)
+                cropped_pic_path = 'D:\pdf_graphic\{}'.format(file_name)
                 gp = GetPic(pdf_path)
                 if not os.path.exists(pic_path):
                     os.makedirs(pic_path)
