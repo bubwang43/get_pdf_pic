@@ -150,8 +150,8 @@ class GetPic:
                 if text_order == 1:
                     first_text = text
                 # 匹配关键词
-                if re.search(r'[图表]+\s*\d+[:：\s]*', text):
-                    title_start = re.search(r'[图表]+\s*\d+[:：\s]*', text).start()
+                if re.search(r'[图表]+\s*\d+[:：\s]+', text):
+                    title_start = re.search(r'[图表]+\s*\d+[:：\s]+', text).start()
                     loc_top.append((i.bbox, text[title_start:].replace('\n', '')))
                 elif re.search(r'来源[:：\s]', text):
                     text = text.split('\n')[0]
@@ -319,15 +319,16 @@ class GetPic:
             os.remove(png2)
             joint.save(png1)
 
+
 if __name__ == '__main__':
-    file_dir = 'D:\cicc_yanbao'  # 你的文件路径
+    file_dir = 'D:\\cicc\\report'  # 你的文件路径
     for root, dirs, files in os.walk(file_dir):
         for file in files:
             if os.path.splitext(file)[1] == '.pdf':
                 file_name = os.path.splitext(file)[0]
                 pdf_path = os.path.join(root, file)
-                pic_path = "D:\pdf_graphic\{}\PNG".format(file_name)
-                cropped_pic_path = 'D:\pdf_graphic\{}'.format(file_name)
+                pic_path = "D:\\cicc\\report_graphic\\{}\\PNG".format(file_name)
+                cropped_pic_path = 'D:\\cicc\\report_graphic\\{}'.format(file_name)
                 gp = GetPic(pdf_path)
                 if not os.path.exists(pic_path):
                     os.makedirs(pic_path)
