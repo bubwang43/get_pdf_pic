@@ -53,10 +53,10 @@ class GetPic:
         :return: 图片的路径
         """
         rotate = int(0)
-        trans = fitz.Matrix(zoom, zoom).preRotate(rotate)
-        pm = doc.getPixmap(matrix=trans, alpha=False)
+        trans = fitz.Matrix(zoom, zoom).prerotate(rotate)
+        pm = doc.get_pixmap(matrix=trans, alpha=False)
         path = os.path.join(pic_path, str(pg)) + '.png'
-        pm.writePNG(path)
+        pm.save(path)
         return path
 
     def get_level(self, zip_loc_list):
@@ -203,7 +203,10 @@ class GetPic:
         try:
             cropped_img = img.crop((x1, y1, x2, y2))
             # 保存截图文件的路径
+            cropped_pic_name = cropped_pic_name.replace(':', '：')
             path = os.path.join(cropped_pic_path, cropped_pic_name) + '.png'
+            print('path:', path)
+            # path = os.path.join('D:\\cicc\\qqq', '111') + '.png'
             cropped_img.save(path)
             print('成功截取图片:', cropped_pic_name)
         except Exception as e:
@@ -321,14 +324,14 @@ class GetPic:
 
 
 if __name__ == '__main__':
-    file_dir = 'D:\\cicc\\report'  # 你的文件路径
+    file_dir = 'D:\\cicc\\pdf'  # 你的文件路径
     for root, dirs, files in os.walk(file_dir):
         for file in files:
             if os.path.splitext(file)[1] == '.pdf':
                 file_name = os.path.splitext(file)[0]
                 pdf_path = os.path.join(root, file)
-                pic_path = "D:\\cicc\\report_graphic\\{}\\PNG".format(file_name)
-                cropped_pic_path = 'D:\\cicc\\report_graphic\\{}'.format(file_name)
+                pic_path = "D:\\cicc\\report_graphic_temp\\{}\\PNG".format(file_name)
+                cropped_pic_path = 'D:\\cicc\\report_graphic_temp\\{}'.format(file_name)
                 gp = GetPic(pdf_path)
                 if not os.path.exists(pic_path):
                     os.makedirs(pic_path)
