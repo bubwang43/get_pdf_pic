@@ -96,7 +96,8 @@ class GetPic:
                 # 将两个待比较的图表中更扁平的图表对应的高度值保存下来
                 high = min(abs(zip_loc_list[i][0][0][3] - zip_loc_list[i][1][0][1]), \
                            abs(zip_loc_list[j][0][0][3] - zip_loc_list[j][1][0][1]))
-
+                num1 = abs(zip_loc_list[i][0][0][3] - zip_loc_list[j][0][0][3])
+                num2 = abs(zip_loc_list[i][1][0][1] - zip_loc_list[j][1][0][1])
                 # 如果一个图表把另一个图表完全包住，即上边界比另一个高，下边界比另一个低，那么认为两个图表在一条水平线上
                 if zip_loc_list[i][0][0][3] <= zip_loc_list[j][0][0][3] and \
                         zip_loc_list[i][1][0][1] >= zip_loc_list[j][1][0][1]:
@@ -107,7 +108,10 @@ class GetPic:
                         zip_loc_list[i][1][0][1] <= zip_loc_list[j][1][0][1]:
                     visit[j] = 1
                     level_dict[level_count_str].append(j)
-
+                # 如果图表的下边界和另一个图表的上边界位置相同，那么认为两个图表不在一条水平线上
+                elif zip_loc_list[i][1][0][3] == zip_loc_list[j][0][0][3] and \
+                        zip_loc_list[i][1][0][1] == zip_loc_list[j][0][0][1]:
+                    continue
                 # 如果两个图表上边界高度之差和下边界高度之差都大于high值，那么认为两个图表不在一条水平线上
                 elif min(abs(zip_loc_list[i][0][0][3] - zip_loc_list[j][0][0][3]), \
                          abs(zip_loc_list[i][1][0][1] - zip_loc_list[j][1][0][1])) >= high:
@@ -153,7 +157,7 @@ class GetPic:
                 if re.search(r'[图表]+\s*\d+[:：\s]+', text):
                     title_start = re.search(r'[图表]+\s*\d+[:：\s]+', text).start()
                     loc_top.append((i.bbox, text[title_start:].replace('\n', '')))
-                elif re.search(r'来源[:：\s]', text):
+                if re.search(r'来源[:：\s]', text):
                     text = text.split('\n')[0]
                     loc_bottom.append((i.bbox, text))
                     # 如果单页得到的第一个关键词是r'来源[:：\s]'而不是r'[图表]+\s*\d+[:：\s]*'
