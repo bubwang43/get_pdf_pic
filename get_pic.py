@@ -112,6 +112,9 @@ class GetPic:
                 elif zip_loc_list[i][1][0][3] == zip_loc_list[j][0][0][3] and \
                         zip_loc_list[i][1][0][1] == zip_loc_list[j][0][0][1]:
                     continue
+                elif zip_loc_list[i][0][0][3] == zip_loc_list[j][1][0][3] and \
+                        zip_loc_list[i][0][0][1] == zip_loc_list[j][1][0][1]:
+                    continue
                 # 如果两个图表上边界高度之差和下边界高度之差都大于high值，那么认为两个图表不在一条水平线上
                 elif min(abs(zip_loc_list[i][0][0][3] - zip_loc_list[j][0][0][3]), \
                          abs(zip_loc_list[i][1][0][1] - zip_loc_list[j][1][0][1])) >= high:
@@ -207,7 +210,8 @@ class GetPic:
         try:
             cropped_img = img.crop((x1, y1, x2, y2))
             # 保存截图文件的路径
-            cropped_pic_name = cropped_pic_name.replace(':', '：')
+            cropped_pic_name = cropped_pic_name.replace(':', '：').replace(" ", "")
+            cropped_pic_name = cropped_pic_name.split('资料来源')[0]
             path = os.path.join(cropped_pic_path, cropped_pic_name) + '.png'
             print('path:', path)
             # path = os.path.join('D:\\cicc\\qqq', '111') + '.png'
@@ -328,14 +332,14 @@ class GetPic:
 
 
 if __name__ == '__main__':
-    file_dir = 'D:\\cicc\\pdf'  # 你的文件路径
+    file_dir = 'D:\\cicc\\word2pdf\\2016'  # 你的文件路径
     for root, dirs, files in os.walk(file_dir):
         for file in files:
             if os.path.splitext(file)[1] == '.pdf':
                 file_name = os.path.splitext(file)[0]
                 pdf_path = os.path.join(root, file)
-                pic_path = "D:\\cicc\\report_graphic_temp\\{}\\PNG".format(file_name)
-                cropped_pic_path = 'D:\\cicc\\report_graphic_temp\\{}'.format(file_name)
+                pic_path = "D:\\cicc\\report_graphic_temp\\2016\\{}\\PNG".format(file_name)
+                cropped_pic_path = 'D:\\cicc\\report_graphic_temp\\2016\\{}'.format(file_name)
                 gp = GetPic(pdf_path)
                 if not os.path.exists(pic_path):
                     os.makedirs(pic_path)
